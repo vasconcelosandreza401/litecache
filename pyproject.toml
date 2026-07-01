@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "litecache"
+version = "0.1.0"
+description = "A tiny in-memory LRU cache with optional TTL, standard library only."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "vasconcelosandreza401" }]
+requires-python = ">=3.7"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+Homepage = "https://github.com/vasconcelosandreza401/litecache"
+
+[tool.setuptools]
+packages = ["litecache"]
