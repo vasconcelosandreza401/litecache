@@ -1,0 +1,58 @@
+import os
+import sys
+import time
+import unittest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from litecache import LRUCache  # noqa: E402
+
+
+class TestLRUCache(unittest.TestCase):
+    def test_get_put(self):
+        c = LRUCache(2)
+        c.put("a", 1)
+        self.assertEqual(c.get("a"), 1)
+        self.assertEqual(c.get("missing", "d"), "d")
+
+    def test_capacity_eviction(self):
+        c = LRUCache(2)
+        c.put("a", 1)
+        c.put("b", 2)
+        c.put("c", 3)
+        self.assertNotIn("a", c)
+        self.assertIn("b", c)
+        self.assertIn("c", c)
+
+    def test_lru_order(self):
+        c = LRUCache(2)
+        c.put("a", 1)
+        c.put("b", 2)
+        c.get("a")            # touch a -> b becomes least recent
+        c.put("c", 3)
+        self.assertIn("a", c)
+        self.assertNotIn("b", c)
+
+    def test_ttl_expiry(self):
+        c = LRUCache(10, ttl=0.02)
+        c.put("x", 1)
+        self.assertEqual(c.get("x"), 1)
+        time.sleep(0.03)
+        self.assertIsNone(c.get("x"))
+        self.assertNotIn("x", c)
+
+    def test_stats(self):
+        c = LRUCache(10)
+        c.put("a", 1)
+        c.get("a")
+        c.get("nope")
+        s = c.stats()
+        self.assertEqual(s["hits"], 1)
+        self.assertEqual(s["misses"], 1)
+
+    def test_capacity_validation(self):
+        with self.assertRaises(ValueError):
+            LRUCache(0)
+
+
+if __name__ == "__main__":
+    unittest.main()
