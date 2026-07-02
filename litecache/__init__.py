@@ -21,7 +21,7 @@ class LRUCache:
             raise ValueError("ttl must be positive or None")
         self.capacity = capacity
         self.ttl = ttl
-        self._data = OrderedDict()  # key -> (value, expires_at | None)
+        self._data = OrderedDict()
         self.hits = 0
         self.misses = 0
 
@@ -52,6 +52,13 @@ class LRUCache:
         self.hits += 1
         return entry[0]
 
+    def peek(self, key, default=None):
+        """Return a value without updating LRU order or hit/miss stats."""
+        entry = self._data.get(key)
+        if entry is None or self._expired(entry[1]):
+            return default
+        return entry[0]
+
     def put(self, key, value, ttl=_MISSING):
         effective = self.ttl if ttl is _MISSING else ttl
         expires_at = time.monotonic() + effective if effective is not None else None
@@ -60,6 +67,13 @@ class LRUCache:
         self._data[key] = (value, expires_at)
         while len(self._data) > self.capacity:
             self._data.popitem(last=False)
+
+    def pop(self, key, default=None):
+        """Remove `key` and return its value, or `default` if absent/expired."""
+        entry = self._data.pop(key, None)
+        if entry is None or self._expired(entry[1]):
+            return default
+        return entry[0]
 
     def clear(self):
         self._data.clear()
