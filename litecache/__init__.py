@@ -2,10 +2,11 @@
 
 Standard library only.
 """
+import functools
 import time
 from collections import OrderedDict
 
-__all__ = ["LRUCache"]
+__all__ = ["LRUCache", "memoize"]
 __version__ = "0.1.0"
 
 _MISSING = object()
@@ -82,3 +83,28 @@ class LRUCache:
 
     def stats(self):
         return {"hits": self.hits, "misses": self.misses, "size": len(self._data)}
+
+
+def memoize(capacity=128, ttl=None):
+    """Decorator caching a function's return values in an LRUCache.
+
+    Keyed by positional and keyword arguments; the wrapped function gains a
+    ``.cache`` attribute for inspection or clearing.
+    """
+    def decorator(func):
+        cache = LRUCache(capacity=capacity, ttl=ttl)
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            key = (args, tuple(sorted(kwargs.items())))
+            cached = cache.get(key, _MISSING)
+            if cached is not _MISSING:
+                return cached
+            result = func(*args, **kwargs)
+            cache.put(key, result)
+            return result
+
+        wrapper.cache = cache
+        return wrapper
+
+    return decorator
